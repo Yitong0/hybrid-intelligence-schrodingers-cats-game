@@ -31,8 +31,8 @@ def play_match(env: SchCatsEnv, a0, a1) -> Tuple[int, int]:
 
         if winner is not None:
             # notify agents for explicit memory updates
-            a0.observe_round_end(my_id=0, winner=winner, last_obs=obs0)
-            a1.observe_round_end(my_id=1, winner=winner, last_obs=obs1)
+            a0.observe_round_end(my_id=0, winner=winner, last_obs=env.last_round_obs(0))
+            a1.observe_round_end(my_id=1, winner=winner, last_obs=env.last_round_obs(1))
 
     return env.scores[0], env.scores[1]
 
@@ -65,11 +65,26 @@ def main():
     # Baseline: ToM0(mem) vs ToM0(mem)
     r00 = eval_config(N_MATCHES, ROUNDS_PER_MATCH, SEED, ToM0MemoryAgent, ToM0MemoryAgent)
 
-    # Main: ToM1 vs ToM0(mem)
-    r10 = eval_config(N_MATCHES, ROUNDS_PER_MATCH, SEED, ToM1Agent, ToM0MemoryAgent)
+    # Main comparisons with seat swapping:
+    # A) ToM1 is player 0
+    r10_p0 = eval_config(N_MATCHES, ROUNDS_PER_MATCH, SEED, ToM1Agent, ToM0MemoryAgent)
+    # B) ToM1 is player 1
+    r10_p1 = eval_config(N_MATCHES, ROUNDS_PER_MATCH, SEED, ToM0MemoryAgent, ToM1Agent)
 
-    print("ToM0(mem) vs ToM0(mem):", r00)
-    print("ToM1 vs ToM0(mem):    ", r10)
+    # Extract ToM1 winrates in each seating
+    tom1_wr_as_p0 = r10_p0.winrate_p0  # p0 is ToM1
+    tom1_wr_as_p1 = r10_p1.winrate_p1  # p1 is ToM1
+
+    tom1_wr_avg = 0.5 * (tom1_wr_as_p0 + tom1_wr_as_p1)
+
+    print("== Baseline ==")
+    print(f"ToM0(mem) vs ToM0(mem): p0={r00.winrate_p0:.3f}, p1={r00.winrate_p1:.3f}")
+
+    print("\n== Main (seat swap) ==")
+    print(f"ToM1 as P0 vs ToM0(mem): ToM1={r10_p0.winrate_p0:.3f}, ToM0={r10_p0.winrate_p1:.3f}")
+    print(f"ToM0(mem) vs ToM1 as P1: ToM0={r10_p1.winrate_p0:.3f}, ToM1={r10_p1.winrate_p1:.3f}")
+
+    print(f"\nToM1 winrate (avg over seats): {tom1_wr_avg:.4f}")
 
 
 if __name__ == "__main__":
