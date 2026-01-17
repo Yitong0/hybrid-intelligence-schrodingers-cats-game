@@ -1,5 +1,4 @@
 from __future__ import annotations
-from dataclasses import dataclass
 from typing import Optional
 import random
 
@@ -34,7 +33,7 @@ class ToM0MemoryAgent(Agent):
         def my_count(q: QState) -> int:
             return sum(
                 1 for c in my_hand
-                if c.value == q.value or c == Card.HUP
+                if c == Card.HUP or c.value == q.value
             )
 
         # --- adjust aggressiveness using explicit memory ---

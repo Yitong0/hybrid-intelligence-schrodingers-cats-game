@@ -58,7 +58,7 @@ def eval_config(n_matches: int, rounds_per_match: int, seed: int, agent0, agent1
 
 
 def main():
-    N_MATCHES = 200
+    N_MATCHES = 1000
     ROUNDS_PER_MATCH = 30
     SEED = 0
 

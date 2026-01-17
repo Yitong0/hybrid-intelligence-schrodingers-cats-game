@@ -75,7 +75,11 @@ class SchCatsEnv:
         """
         assert self.last_round_public is not None, "No finished round snapshot available yet."
         assert self.last_round_hands is not None, "No finished round snapshot available yet."
-        return Observation(my_id=pid, my_hand=list(self.last_round_hands[pid]), public=self.last_round_public)
+        return Observation(
+            my_id=pid,
+            my_hand=list(self.last_round_hands[pid]),
+            public=self.last_round_public,
+        )
 
     def legal_actions(self, pid: int) -> List[Action]:
         assert self.public is not None
@@ -139,12 +143,14 @@ class SchCatsEnv:
             assert self.public.current_claim is not None, "Cannot doubt before any claim."
 
             # log the doubt action publicly (explicit action memory)
-            self.public.history.append(PublicEvent(
-                pid=pid,
-                kind="doubt",
-                claim=self.public.current_claim,
-                revealed_count=0,
-            ))
+            self.public.history.append(
+                PublicEvent(
+                    pid=pid,
+                    kind="doubt",
+                    claim=self.public.current_claim,
+                    revealed_count=0,
+                )
+            )
 
             claim = self.public.current_claim
             truth = check_claim_is_true(claim, self.hands)
@@ -178,19 +184,28 @@ class SchCatsEnv:
             for idx in action.reveal_idxs:
                 if idx < 0 or idx >= len(self.hands[pid]):
                     raise ValueError("Bad reveal index.")
+
                 card = self.hands[pid][idx]
+
+                # NEW: prevent counting the same face-up card multiple times
+                # (once a card is face-up, re-"revealing" it should not add new evidence)
+                if card in self.public.revealed[pid]:
+                    continue
+
                 # must match claimed state OR be HUP
                 if not (card == Card.HUP or card.value == action.claim.qstate.value):
                     raise ValueError("Revealed card does not support claim.")
                 revealed_cards.append(card)
 
             # log the claim action publicly (explicit action memory)
-            self.public.history.append(PublicEvent(
-                pid=pid,
-                kind="claim",
-                claim=action.claim,
-                revealed_count=len(revealed_cards),
-            ))
+            self.public.history.append(
+                PublicEvent(
+                    pid=pid,
+                    kind="claim",
+                    claim=action.claim,
+                    revealed_count=len(revealed_cards),
+                )
+            )
 
             # update public evidence + claim + turn
             self.public.revealed[pid].extend(revealed_cards)
