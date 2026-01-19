@@ -1,22 +1,26 @@
+from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional, List, Tuple
+from typing import Optional, List, Dict
 from .rules import Claim
 from .cards import Card
+
 
 @dataclass(frozen=True)
 class PublicEvent:
     pid: int
-    kind: str  # "claim" or "doubt"
+    kind: str  
     claim: Optional[Claim] = None
     revealed_count: int = 0
+
 
 @dataclass
 class PublicState:
     current_claim: Optional[Claim]
-    revealed: dict[int, list[Card]]
+    revealed: Dict[int, Dict[int, Card]]
     turn: int
     round_idx: int
-    history: List[PublicEvent]      
+    history: List[PublicEvent]
+
 
 @dataclass(frozen=True)
 class Observation:
@@ -27,4 +31,4 @@ class Observation:
     """
     my_id: int
     my_hand: List[Card]
-    public: PublicState   
+    public: PublicState
