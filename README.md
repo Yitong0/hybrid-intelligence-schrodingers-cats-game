@@ -34,7 +34,7 @@ The project includes:
 
 ## Requirements
 
-- Python 3.10+ (3.11 also fine)
+- Python 3.10+
 - No external dependencies required beyond the standard library for the core experiments.
 
 ---
