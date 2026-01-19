@@ -22,8 +22,7 @@ def claim_strength(c: Claim) -> Tuple[int, int]:
     Implements ordering rules as described in the project pdf on brightspace:
     - higher number is stronger
     - for same number: alive stronger than dead
-    - empty 'counts double' and is stronger than alive
-      (e.g., 2 empty ~ effective 4, stronger than 4 alive, weaker than 5 dead)
+    - empty counts double and is stronger than alive
     """
     if c.qstate == QState.EMPTY:
         effective = 2 * c.qty
@@ -48,7 +47,6 @@ def check_claim_is_true(
     """
     When doubting, all hands are revealed.
     HUP counts as any quantum state for satisfying the claim.
-     [oai_citation:9‡HybridIntelligence_project.pdf](file-service://file-JkWz1xDKUBgnMr327uyr5J)
     """
     needed = claim.qty
     target = claim.qstate.value

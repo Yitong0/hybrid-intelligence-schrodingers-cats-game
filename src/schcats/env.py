@@ -29,9 +29,6 @@ class SchCatsEnv:
     Two-player match consisting of multiple rounds.
     Evidence-based variant: when making a claim, a player may reveal any number
     of matching cards (and/or HUP) as evidence.
-
-    Revealed cards are tracked by hand index (identity), not by Card value.
-    public.revealed: pid -> {hand_idx: Card}
     """
 
     def __init__(self, rounds_per_match: int = 20, seed: int = 0):

@@ -12,19 +12,12 @@ from ..cards import Card
 
 class ToM1Agent(Agent):
     """
-    First-order ToM agent with an explicit fallback-to-ToM0 mechanism.
+    First-order ToM agent.
 
     - Interpretative ToM:
         Uses opponent revealed evidence as information about opponent hidden hand.
     - Predictive ToM:
         Predicts opponent doubt probability for candidate claims using inferred traits.
-    - Rubric requirement:
-        Can choose to behave as if it were a ToM0 agent based on observed opponent behaviour.
-        Implemented as a behaviour-based fallback mode (no oracle knowledge of opponent type).
-
-    Fallback trigger in THIS version:
-        Activate ToM0-style fallback for the next round iff opponent doubted in EACH of
-        the previous two finished rounds (two consecutive rounds with a doubt).
     """
 
     DECK_COUNTS = {
@@ -40,7 +33,7 @@ class ToM1Agent(Agent):
         self.rng = random.Random(seed)
 
         self.opponent_is_conservative: bool = False
-        self.opponent_bluffiness: float = 0.0  # 0..1, higher => more likely to overclaim
+        self.opponent_bluffiness: float = 0.0  
 
         self.fallback_rounds_left: int = 0
 
@@ -93,9 +86,6 @@ class ToM1Agent(Agent):
         - known cards: my hand + opponent revealed evidence (public)
         - unknown cards: opponent unrevealed hand slots
         Model unknowns as draws without replacement from remaining deck.
-
-        IMPORTANT: pub.revealed[pid] is a dict {hand_idx: Card} in this project version.
-        We must use `.values()` to get Cards (iterating the dict yields int keys).
         """
         pub = obs.public
         my_id = obs.my_id
@@ -155,7 +145,6 @@ class ToM1Agent(Agent):
         A ToM0-style policy:
         - Decide doubt vs continue from claim plausibility only (no opponent-reaction model).
         - Choose stronger claim maximizing plausibility minus mild aggression penalties.
-        Still uses opponent revealed evidence (public) because that is observable.
         """
         pub = obs.public
         my_hand = obs.my_hand

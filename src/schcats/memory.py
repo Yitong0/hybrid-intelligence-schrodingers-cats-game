@@ -8,7 +8,7 @@ from .rules import Claim
 class RoundMemory:
     """
     Explicit memory of at least the previous round.
-    Used by ToM0 (required) and informs ToM1 (required by variant text).
+    Used by ToM0 (required) and informs ToM1 (required by variant).
     """
     opponent_doubted: bool
     opponent_evidence_revealed: int

@@ -165,7 +165,7 @@ class ToM0MemoryAgent(Agent):
                 best_score = score
                 best = c
 
-        # If every stronger claim is too risky, doubt instead (this happens late game)
+
         if best is None or (best_score < (0.10 if conservative else 0.05)):
             return Doubt()
 
