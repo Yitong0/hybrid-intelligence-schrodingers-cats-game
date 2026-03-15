@@ -1,4 +1,6 @@
 from __future__ import annotations
+import sys
+import time
 from dataclasses import dataclass
 from typing import Tuple, Type
 from ..env import SchCatsEnv
@@ -28,7 +30,7 @@ def play_match(env: SchCatsEnv, a0, a1) -> Tuple[int, int]:
     done = False
 
     while not done:
-        pid = env.public.turn 
+        pid = env.public.turn
         obs = obs0 if pid == 0 else obs1
         agent = a0 if pid == 0 else a1
         action = agent.act(obs)
@@ -45,9 +47,12 @@ def play_match(env: SchCatsEnv, a0, a1) -> Tuple[int, int]:
 
 
 def eval_config(n_matches: int, rounds_per_match: int, seed: int,
-                agent0: Type, agent1: Type) -> Result:
+                agent0: Type, agent1: Type, label: str = "") -> Result:
     p0_total = 0
     p1_total = 0
+    start = time.time()
+    log_every = max(1, n_matches // 20)  # log ~20 times
+
     for m in range(n_matches):
         env = SchCatsEnv(rounds_per_match=rounds_per_match, seed=seed + m)
         a0 = agent0(seed=seed + 1000 + m)
@@ -55,6 +60,18 @@ def eval_config(n_matches: int, rounds_per_match: int, seed: int,
         s0, s1 = play_match(env, a0, a1)
         p0_total += s0
         p1_total += s1
+
+        if (m + 1) % log_every == 0 or m == n_matches - 1:
+            elapsed = time.time() - start
+            pct = (m + 1) / n_matches * 100
+            rounds_done = (m + 1) * rounds_per_match
+            p0_rate = p0_total / rounds_done if rounds_done > 0 else 0
+            eta = elapsed / (m + 1) * (n_matches - m - 1)
+            print(f"  [{label}] {m+1}/{n_matches} matches ({pct:.0f}%)  "
+                  f"P0 winrate so far: {p0_rate:.3f}  "
+                  f"elapsed: {elapsed:.0f}s  ETA: {eta:.0f}s",
+                  flush=True)
+
     return Result(p0_round_wins=p0_total, p1_round_wins=p1_total)
 
 
@@ -73,15 +90,23 @@ def main():
     ROUNDS_PER_MATCH = 30
     SEED = 0
 
-    r00 = eval_config(N_MATCHES, ROUNDS_PER_MATCH, SEED, ToM0MemoryAgent, ToM0MemoryAgent)
-    r10_p0 = eval_config(N_MATCHES, ROUNDS_PER_MATCH, SEED, ToM1Agent, ToM0MemoryAgent)
-    r10_p1 = eval_config(N_MATCHES, ROUNDS_PER_MATCH, SEED, ToM0MemoryAgent, ToM1Agent)
+    print("Starting baseline: ToM0(mem) vs ToM0(mem)...", flush=True)
+    r00 = eval_config(N_MATCHES, ROUNDS_PER_MATCH, SEED,
+                      ToM0MemoryAgent, ToM0MemoryAgent, label="ToM0 vs ToM0")
 
+    print("\nStarting ToM1 as P0 vs ToM0(mem)...", flush=True)
+    r10_p0 = eval_config(N_MATCHES, ROUNDS_PER_MATCH, SEED,
+                         ToM1Agent, ToM0MemoryAgent, label="ToM1(P0) vs ToM0")
+
+    print("\nStarting ToM1 as P1 vs ToM0(mem)...", flush=True)
+    r10_p1 = eval_config(N_MATCHES, ROUNDS_PER_MATCH, SEED,
+                         ToM0MemoryAgent, ToM1Agent, label="ToM0 vs ToM1(P1)")
+
+    print()
     _print_result("== Baseline: ToM0(mem) vs ToM0(mem) ==", r00)
     _print_result("== ToM1 as P0 vs ToM0(mem) ==", r10_p0)
     _print_result("== ToM1 as P1 vs ToM0(mem) ==", r10_p1)
 
-    # Average ToM1 winrate across seats:
     tom1_wins = r10_p0.p0_round_wins + r10_p1.p1_round_wins
     tom1_losses = r10_p0.p1_round_wins + r10_p1.p0_round_wins
     tom1 = WinStats(tom1_wins, tom1_losses)
