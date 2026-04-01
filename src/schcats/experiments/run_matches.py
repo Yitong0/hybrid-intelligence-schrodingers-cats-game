@@ -52,17 +52,23 @@ def eval_config(n_matches: int, rounds_per_match: int, seed: int,
     p1_total = 0
     start = time.time()
     log_every = max(1, n_matches // 20)
-    last_a0 = None
-    last_a1 = None
+
+    total_fallback_turns = 0
+    total_tom1_turns = 0
 
     for m in range(n_matches):
         env = SchCatsEnv(rounds_per_match=rounds_per_match, seed=seed + m)
         a0 = agent0(seed=seed + 1000 + m)
         a1 = agent1(seed=seed + 2000 + m)
+
         s0, s1 = play_match(env, a0, a1)
         p0_total += s0
         p1_total += s1
-        last_a0, last_a1 = a0, a1
+
+        for agent in (a0, a1):
+            if hasattr(agent, "_fallback_turns") and hasattr(agent, "_total_turns"):
+                total_fallback_turns += agent._fallback_turns
+                total_tom1_turns += agent._total_turns
 
         if (m + 1) % log_every == 0 or m == n_matches - 1:
             elapsed = time.time() - start
@@ -76,12 +82,8 @@ def eval_config(n_matches: int, rounds_per_match: int, seed: int,
                   flush=True)
 
     result = Result(p0_round_wins=p0_total, p1_round_wins=p1_total)
-    fallback_rate = None
-    for agent in [last_a0, last_a1]:
-        if hasattr(agent, "fallback_rate"):
-            fallback_rate = agent.fallback_rate
+    fallback_rate = (total_fallback_turns / total_tom1_turns) if total_tom1_turns > 0 else None
     return result, fallback_rate
-
 
 def _print_result(title: str, r: Result):
     s0 = r.stats_p0()
